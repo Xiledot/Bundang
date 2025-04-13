@@ -1,4 +1,5 @@
 // ✅ api/index.js (Add Initialization Logs)
+const serverless = require('serverless-http');
 console.log("--- api/index.js - Top Level Start ---"); // Log 1
 
 require('dotenv').config();
@@ -136,6 +137,4 @@ app.post('/generate-questions', async (req, res) => {
 console.log("/generate-questions route defined"); // Log 18
 
 // --- Express 앱 내보내기 ---
-console.log("Exporting Express app..."); // Log 19
-module.exports = app;
-console.log("Express app exported."); // Log 20 (Should be last log during init)
+module.exports = serverless(app);

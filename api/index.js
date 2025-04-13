@@ -1,30 +1,30 @@
-// TEMPORARY api/index.js for testing Vercel routing
+// 테스트용 임시 api/index.js
 const express = require('express');
-const cors = require('cors');
 const app = express();
 
+// CORS 추가 (프론트엔드에서 테스트하려면 필요)
+const cors = require('cors');
 app.use(cors());
-app.use(express.json());
 
-// 함수가 시작되는지 확인하기 위한 로그
-console.log("Minimal API handler initialized successfully.");
+// 함수 시작 로그
+console.log("TEST: Minimal API handler starting up.");
 
-// /analyze 경로 테스트
+// 간단한 GET 경로 추가 (브라우저 주소창에서 바로 테스트 가능)
+app.get('/api/health', (req, res) => {
+  console.log("TEST: /api/health GET request received!");
+  res.status(200).send('Health check OK');
+});
+
+// 기존 POST 경로 테스트 (간단 응답)
 app.post('/analyze', (req, res) => {
-  console.log("Received /analyze POST request"); // 요청 수신 로그
-  res.status(200).json({ message: "Analyze endpoint test successful!" });
+  console.log("TEST: /analyze POST request received!");
+  res.status(200).json({ message: "Analyze test OK" });
 });
 
-// /generate-questions 경로 테스트
 app.post('/generate-questions', (req, res) => {
-  console.log("Received /generate-questions POST request"); // 요청 수신 로그
-  res.status(200).json({ message: "Generate questions endpoint test successful!" });
+  console.log("TEST: /generate-questions POST request received!");
+  res.status(200).json({ message: "Generate questions test OK" });
 });
 
-// 혹시 다른 경로로 잘못 라우팅되는지 확인
-app.use((req, res) => {
-    console.log(`Unhandled route accessed: ${req.method} ${req.path}`);
-    res.status(404).send('Route not explicitly handled by Express app');
-});
-
+// Express 앱 내보내기
 module.exports = app;

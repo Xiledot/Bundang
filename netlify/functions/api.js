@@ -150,32 +150,32 @@ exports.handler = async (event, context) => {
             if (isNaN(requestedQuantity) || requestedQuantity <= 0 || requestedQuantity > 5) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid number of questions requested (1-5).' }) };
 
             // 시스템 프롬프트 (문제 생성용 - ★★★ JSON 출력 강조 수정 ★★★)
-            const systemInstruction_generate = `You are an AI assistant that generates English sentence composition practice questions based on a given text passage. Create exactly the specified number of questions. Your SOLE task is to return ONLY a valid JSON array containing the question objects.
+            const systemInstruction_generate = `You are an AI assistant that creates English sentence unscramble/composition exercises from a given English text passage. Generate exactly the specified number of exercises. Each exercise MUST be based on a DIFFERENT sentence or meaningful clause from the passage.
 
-            Each question object MUST have the following fields:
-            1.  "prompt": The original sentence from the passage.
-            2.  "questionText": Instruction like "다음 단어들을 모두 포함하고, 주어진 조건을 만족하도록 문장을 완성하시오."
-            3.  "conditions": Grammatical conditions (e.g., "주어진 단어 모두 사용.\n과거 완료 시제 사용.").
-            4.  "vocabulary": Array of Korean meanings for key words (shuffled).
-            5.  "answer": The target correct English sentence.
-
-            Example format for ONE question object:
+            For each exercise, create a JSON object with the following fields:
+            1.  "korean_prompt": Provide the accurate Korean translation of the *specific* English sentence/clause selected from the passage for this exercise. This Korean sentence serves as the target meaning the user should construct.
+            2.  "vocabulary": Extract ALL individual English words from the selected English sentence/clause. Separate words by spaces, remove punctuation attached to words (like commas, periods). Provide these extracted English words as an array of strings, SHUFFLED randomly.
+            3.  "conditions": Provide an array containing standard conditions for this type of exercise. Use these exact conditions: ["주어진 단어는 모두 한 번씩만 사용할 것 (Use all given words exactly once)", "필요시 문맥과 어법에 맞게 변형할 것 (Transform words if necessary for grammar/context)", "문장 부호는 최종 답안에 포함하지 말 것 (Do not include punctuation in the final answer)"].
+            4.  "questionText": Use the standard Korean instruction: "다음 <보기>의 단어들을 모두 사용하여, 우리말 뜻과 일치하도록 문장을 완성하시오." (Using all the words in <보기> below, complete the sentence to match the Korean meaning.)
+            5.  "answer": The original, correct English sentence/clause that was selected from the passage and translated for "korean_prompt". Ensure this is just the plain sentence text without any labels like "(A)".
+            
+            Example of ONE output JSON object:
             {
-              "prompt": "The quick brown fox jumps over the lazy dog.",
-              "questionText": "다음 단어들을 모두 포함하고, 주어진 조건을 만족하도록 문장을 완성하시오.",
-              "conditions": "주어진 단어를 모두 사용할 것.\\n수동태 문장으로 작성할 것.",
-              "vocabulary": ["게으른", "뛰어넘다", "~에 의해", "그", "개", "빠른", "여우", "갈색"],
-              "answer": "The lazy dog is jumped over by the quick brown fox."
+              "korean_prompt": "그 빠른 갈색 여우는 그 게으른 개를 뛰어넘는다.",
+              "vocabulary": ["lazy", "jumps", "quick", "dog", "over", "fox", "the", "brown", "the"],
+              "conditions": ["주어진 단어는 모두 한 번씩만 사용할 것", "필요시 문맥과 어법에 맞게 변형할 것", "문장 부호는 최종 답안에 포함하지 말 것"],
+              "questionText": "다음 <보기>의 단어들을 모두 사용하여, 우리말 뜻과 일치하도록 문장을 완성하시오.",
+              "answer": "The quick brown fox jumps over the lazy dog."
             }
-
+            
             ABSOLUTELY CRITICAL INSTRUCTIONS:
             - Output ONLY the JSON array (starting with '[' and ending with ']').
-            - Do NOT include ANY introductory text, concluding text, explanations, apologies, notes, or any other text outside the JSON structure.
-            - Do NOT use markdown formatting like \`\`\`json ... \`\`\`.
-            - Ensure the generated JSON is 100% valid according to JSON specifications.
-            - Ensure the 'vocabulary' array is properly shuffled within each object.
-
-            Generate the questions based on the passage provided by the user.`; // 사용자 지문은 userPrompt로 전달됨
+            - Each object in the array must strictly follow the defined fields: korean_prompt, vocabulary, conditions, questionText, answer.
+            - The 'vocabulary' array MUST contain shuffled ENGLISH words extracted from the 'answer' sentence.
+            - The 'korean_prompt' field MUST contain the KOREAN translation of the 'answer' sentence.
+            - Do NOT include ANY text outside the JSON array. Do NOT use markdown fences. Ensure valid JSON.
+            
+            Generate the exercises based on the passage provided by the user.`; // 사용자 지문은 userPrompt로 전달됨
 
             const userPrompt = `Generate ${requestedQuantity} question(s) based on the following passage (each from a different sentence):\n\n"${text}"`;
 

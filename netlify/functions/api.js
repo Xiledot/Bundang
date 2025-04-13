@@ -1,197 +1,31 @@
-// netlify/functions/api.js
-const serverless = require('serverless-http');
-console.log("--- netlify/functions/api.js - Top Level Start ---");
+// netlify/functions/api.js (Basic Test Code)
 
-require('dotenv').config();
-console.log("dotenv configured");
+exports.handler = async (event, context) => {
+  // ★★★ 이 로그가 보이는지 확인하는 것이 핵심 ★★★
+  console.log("--- ✅ BASIC TEST HANDLER INVOKED ---");
+  console.log("Received path:", event.path);
+  console.log("Received method:", event.httpMethod);
+  console.log("Received headers:", JSON.stringify(event.headers || {}, null, 2)); // headers가 없을 수도 있으니 기본값 추가
+  console.log("Received body:", event.body);
 
-const express = require('express');
-console.log("express required");
-
-const cors = require('cors');
-console.log("cors required");
-
-const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
-console.log("@google/generative-ai required");
-
-const app = express();
-console.log("express app initialized");
-
-// --- Google AI 클라이언트 초기화 ---
-let genAI;
-let googleApiKey = process.env.GOOGLE_API_KEY || '';
-console.log(`GOOGLE_API_KEY length: ${googleApiKey.length}`);
-
-if (!googleApiKey && process.env.NODE_ENV !== 'production') {
-  console.error("ERROR: GOOGLE_API_KEY environment variable is missing!");
-}
-
-try {
-  genAI = new GoogleGenerativeAI(googleApiKey);
-  console.log("GoogleGenerativeAI client instance created (key validity not checked yet)");
-} catch (e) {
-  console.error("FATAL: GoogleGenerativeAI client initialization failed!", e);
-}
-
-// --- 안전 설정 ---
-const safetySettings = [
- { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
- // ... (다른 안전 설정)
-];
-console.log("Safety settings defined");
-
-// --- 모델 이름 설정 ---
-const modelName = 'gemini-1.5-pro-latest';
-console.log(`Model name set to: ${modelName}`);
-
-// --- 미들웨어 설정 ---
-try {
-  app.use(cors({ origin: '*' })); // 모든 출처 허용
-  console.log("cors middleware applied");
-  app.use(express.json());
-  console.log("express.json middleware applied");
-} catch(e) {
-   console.error("FATAL: Middleware setup failed!", e);
-}
-
-// --- Helper Functions (shuffleArray, callGemini) ---
-// ... (이전에 제공된 shuffleArray, callGemini 함수 코드 전체 붙여넣기) ...
-// --- 배열 섞기 함수 ---
-function shuffleArray(array) { if (!array) return; for (let i = array.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [array[i], array[j]] = [array[j], array[i]]; } }
-console.log("shuffleArray function defined");
-
-// --- Helper Function: Gemini API 호출 ---
-async function callGemini(systemInstruction, userPrompt, generationConfigOverrides = {}) {
-    // ... (이전에 제공된 callGemini 함수 코드 전체 붙여넣기, 오류 처리 강화 버전) ...
-     if (!genAI || !process.env.GOOGLE_API_KEY) {
-        console.error("FATAL: Google AI Client is not initialized or API key is missing in callGemini!");
-        throw new Error("Google AI Client is not available or API key is missing.");
-    }
-    console.log("callGemini - helper function entered");
-    const currentGenAI = genAI;
-    const model = currentGenAI.getGenerativeModel({ model: modelName, safetySettings: safetySettings });
-    const fullPrompt = `${systemInstruction}\n\n---\n\n사용자 요청:\n${userPrompt}\n\n---\n\n위 지침에 따라 요청을 처리하고, 필요한 경우 JSON 형식으로만 응답해 주세요.`;
-    const generationConfig = { temperature: 0.5, maxOutputTokens: 4096, ...generationConfigOverrides };
-
-    console.log(`--- Calling Gemini API (${modelName}) ---`);
-    try {
-        const result = await model.generateContent(fullPrompt, generationConfig);
-        console.log("--- Gemini API call finished ---");
-        const response = result.response;
-
-        if (!response) { throw new Error("Gemini API로부터 응답을 받지 못했습니다."); }
-        if (!response.candidates || response.candidates.length === 0) {
-             const feedback = response.promptFeedback;
-             const blockReason = feedback?.blockReason || 'Unknown reason (no candidates)';
-             const safetyRatings = feedback?.safetyRatings;
-             console.error(`Gemini 응답 비정상 (후보 없음) 또는 차단: ${blockReason}`, safetyRatings ? JSON.stringify(safetyRatings) : '');
-             throw new Error(`Gemini API 응답에 후보가 없거나 차단되었습니다. 이유: ${blockReason}`);
-        }
-        const candidate = response.candidates[0];
-        if (candidate.finishReason !== 'STOP' && candidate.finishReason !== 'MAX_TOKENS') {
-             const feedback = response.promptFeedback || candidate.promptFeedback;
-             const blockReason = feedback?.blockReason || candidate.finishReason || '알 수 없음';
-             const safetyRatings = feedback?.safetyRatings || candidate.safetyRatings;
-             console.error(`Gemini 응답 비정상 종료 또는 차단: ${blockReason}`, safetyRatings ? JSON.stringify(safetyRatings) : '');
-             throw new Error(`Gemini API 응답이 비정상 종료 또는 차단되었습니다. 이유: ${blockReason}`);
-        }
-        if (!candidate.content || !candidate.content.parts || candidate.content.parts.length === 0 || !candidate.content.parts[0].text) {
-             console.error("Gemini API 응답 내용 없음:", JSON.stringify(response));
-             throw new Error("Gemini API 응답에 유효한 텍스트 내용이 없습니다.");
-        }
-
-        const rawText = candidate.content.parts[0].text.trim();
-        console.log("--- Gemini API Response (Raw Text Sample) ---"); console.log(rawText.substring(0, 200) + '...');
-        const jsonString = rawText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        return jsonString;
-    } catch (error) {
-        console.error(`Gemini API 호출 중 오류 발생 (${modelName}):`, error);
-        throw new Error(`Gemini API 호출 실패: ${error.message}`);
-    }
-}
-console.log("callGemini helper function defined");
-
-
-// --- 1. 문장 구조 분석 엔드포인트 (수정된 경로!) ---
-app.post('/api/analyze', async (req, res) => { // ★★★ 경로 수정됨 ★★★
-  console.log(`✅ --- ENTERED /api/analyze route handler ---`); // 핸들러 진입 확인 로그!
-  console.log(`Request path received by Express: ${req.path}`);
-  console.log(`Request method received by Express: ${req.method}`);
-
-  const { sentence } = req.body;
-  console.log("구조 분석 요청 수신 (in handler):", sentence ? sentence.substring(0, 50) + '...' : 'empty');
-
-  if (!sentence) {
-    console.log("Bad request: sentence is missing");
-    return res.status(400).json({ error: '문장이 전달되지 않았습니다.' });
+  // 요청 경로에 따라 다른 응답 메시지 설정 (테스트용)
+  let responseMessage = "Basic handler default response.";
+  if (event.path && event.path.endsWith('/api/analyze')) {
+      responseMessage = "Basic handler successfully received request for /api/analyze!";
+  } else if (event.path && event.path.endsWith('/api/generate-questions')) {
+      responseMessage = "Basic handler successfully received request for /api/generate-questions!";
   }
-  const systemPrompt = `...[프롬프트 내용 생략]...`; // 프롬프트 생략
 
-  try {
-    const jsonString = await callGemini(systemPrompt, `"${sentence}"`, { temperature: 0.2 });
-    let parsed;
-    try {
-      parsed = JSON.parse(jsonString);
-      if (!Array.isArray(parsed)) { throw new Error("응답 형식이 JSON 배열이 아닙니다."); }
-      // ... (추가 검증 필요 시) ...
-    } catch (e) {
-      console.error('Gemini 응답 JSON 파싱 실패 (구조 분석):', e.message, 'Raw string:', jsonString);
-      return res.status(500).json({ error: `Gemini 응답 처리 오류 (${e.message})`, rawResponse: jsonString });
-    }
-    console.log("구조 분석 응답 성공");
-    res.status(200).json(parsed);
-
-  } catch (error) {
-    console.error('Gemini API 또는 처리 오류 (구조 분석):', error);
-    res.status(500).json({ error: '문장 분석 중 서버 오류 발생', details: error.message });
-  }
-});
-console.log("/api/analyze route defined");
-
-// --- 2. 문제 생성 엔드포인트 (수정된 경로!) ---
-app.post('/api/generate-questions', async (req, res) => { // ★★★ 경로 수정됨 ★★★
-  console.log(`✅ --- ENTERED /api/generate-questions route handler ---`); // 핸들러 진입 확인 로그!
-  console.log(`Request path received by Express: ${req.path}`);
-  console.log(`Request method received by Express: ${req.method}`);
-
-  const { text, quantity = 1 } = req.body;
-  console.log(`문제 생성 요청 수신 (in handler): ${quantity}개`);
-
-  // ... (이전에 제공된 문제 생성 로직 전체 붙여넣기, 오류 처리 강화 버전) ...
-   const requestedQuantity = parseInt(quantity, 10);
-  if (!text || text.trim().length === 0) { return res.status(400).json({ error: '지문 텍스트가 전달되지 않았습니다.' }); }
-  if (isNaN(requestedQuantity) || requestedQuantity <= 0 || requestedQuantity > 10) { return res.status(400).json({ error: '요청 문제 개수가 유효하지 않습니다 (1~10개).' }); }
-  const questionGenSystemPrompt = `...[프롬프트 내용 생략]...`; // 프롬프트 생략
-  const userPrompt = `다음 지문으로 조건 영작 문제를 ${requestedQuantity}개 생성해줘 (각 문제는 서로 다른 문장 기반이어야 함):\n\n"${text}"`;
-
-  try {
-    const jsonString = await callGemini(questionGenSystemPrompt, userPrompt, { temperature: 0.7 });
-    let parsedArray;
-    try {
-      parsedArray = JSON.parse(jsonString);
-      if (!Array.isArray(parsedArray)) { throw new Error("Gemini 응답 형식이 JSON 배열이 아닙니다."); }
-      // ... (셔플 및 필드 검증) ...
-       parsedArray.forEach((qo, index) => {
-          if (!qo || typeof qo !== 'object') { throw new Error(`배열의 ${index + 1}번째 요소가 유효한 객체가 아닙니다.`); }
-          if (qo.vocabulary && Array.isArray(qo.vocabulary)) { shuffleArray(qo.vocabulary); } else { qo.vocabulary = []; }
-          const requiredFields = ['questionText', 'prompt', 'conditions', 'vocabulary', 'answer'];
-          const missingFields = requiredFields.filter(field => !(field in qo) || qo[field] === null || qo[field] === undefined);
-          if (missingFields.length > 0) { throw new Error(`배열의 ${index + 1}번째 문제 객체에서 필수 필드(${missingFields.join(', ')})가 누락되었습니다.`); }
-      });
-      if (parsedArray.length === 0) { console.log("AI가 생성한 문제가 없습니다 (빈 배열 반환됨)."); }
-    } catch (e) {
-      console.error('Gemini 응답 JSON 배열 처리(파싱/검증/셔플링) 실패:', e.message, 'Raw string:', jsonString);
-      return res.status(500).json({ error: `Gemini 응답 처리 중 오류 발생 (${e.message})`, rawResponse: jsonString });
-    }
-    console.log(`문제 생성 응답 성공: ${parsedArray.length}개`);
-    res.status(200).json(parsedArray);
-
-  } catch (error) {
-    console.error('Gemini API 또는 처리 오류 (문제 생성):', error);
-    res.status(500).json({ error: '문제 생성 중 서버 오류 발생', details: error.message });
-  }
-});
-console.log("/api/generate-questions route defined");
-
-// --- Express 앱 내보내기 (Netlify 호환 방식) ---
-exports.handler = serverless(app);
+  // 간단한 성공(200 OK) JSON 응답 반환
+  return {
+      statusCode: 200,
+      headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*", // CORS 헤더 포함
+      },
+      body: JSON.stringify({
+          message: responseMessage,
+          receivedPath: event.path // 받은 경로 정보 포함
+      }),
+  };
+};

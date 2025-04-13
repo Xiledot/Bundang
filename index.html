@@ -96,7 +96,7 @@
             outputArea.innerHTML = "분석 중..."; removeLines();
             try {
                 // !!! Netlify API URL로 변경 !!!
-                const response = await fetch("/.netlify/functions/index/analyze", { // ★★★ Netlify 경로로 수정됨 ★★★
+                const response = await fetch("/.netlify/functions/api/analyze", { // ★★★ Netlify 경로로 수정됨 ★★★
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ sentence })
@@ -150,7 +150,7 @@
 
             try {
                  // !!! Netlify API URL로 변경 !!!
-                const response = await fetch("/.netlify/functions/index/generate-questions", { // ★★★ Netlify 경로로 수정됨 ★★★
+                const response = await fetch("/.netlify/functions/api/generate-questions", { // ★★★ Netlify 경로로 수정됨 ★★★
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ text: text, quantity: quantity })

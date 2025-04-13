@@ -273,4 +273,31 @@ Generate the questions based on the provided passage. Output only the JSON array
 console.log("/generate-questions route defined");
 
 // --- Express 앱 내보내기 (Netlify 호환 방식) ---
-exports.handler = serverless(app);
+const appHandler = serverless(app); // 기존 serverless-http 핸들러 생성
+
+// Netlify가 호출할 실제 핸들러 함수
+exports.handler = async (event, context) => {
+    console.log("--- RAW EVENT RECEIVED BY HANDLER ---"); // <-- 이 로그가 보이는지 확인!
+
+    // event 객체 전체를 로깅 (내용 확인용)
+    // 순환 참조 오류 방지를 위한 replacer 함수
+    const getCircularReplacer = () => {
+        const seen = new WeakSet();
+        return (key, value) => {
+            if (typeof value === "object" && value !== null) {
+                if (seen.has(value)) {
+                    return "[Circular]"; // 순환 참조 시 대체 문자열
+                }
+                seen.add(value);
+            }
+            return value;
+        };
+    };
+    // JSON.stringify를 사용하여 event 객체를 문자열로 변환 후 로깅
+    console.log(JSON.stringify(event, getCircularReplacer(), 2)); // <-- 이 아래에 출력될 JSON 데이터가 중요!
+
+    console.log("--- Passing event to serverless-http handler ---");
+
+    // 생성해둔 기존 serverless-http 핸들러를 호출하여 요청 처리
+    return appHandler(event, context);
+};

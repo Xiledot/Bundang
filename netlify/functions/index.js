@@ -137,4 +137,5 @@ app.post('/generate-questions', async (req, res) => {
 console.log("/generate-questions route defined"); // Log 18
 
 // --- Express 앱 내보내기 ---
-module.exports = serverless(app);
+// module.exports = serverless(app); // 기존 방식 주석 처리 또는 삭제
+exports.handler = serverless(app);   // 'handler'라는 이름으로 명시적 내보내기

@@ -1,114 +1,63 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8" />
-    <title>영어 학습 도우미</title>
-    <style>
-        /* ... CSS 스타일 ... */
-         body { font-family: sans-serif; line-height: 1.6; padding: 20px; max-width: 900px; margin: 0 auto; background-color: #f9f9f9; }
-        h1, h2 { text-align: center; color: #333; }
-        /* ... (이전에 제공된 CSS 스타일 전체 붙여넣기) ... */
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/leader-line-new@1.1.9/leader-line.min.js"></script>
-</head>
-<body>
-    <h1>영어 학습 도우미</h1>
-    <div id="navigation">
-        <button id="show-structure-btn" class="active">구조 분석</button>
-        <button id="show-question-btn">문제 생성</button>
-    </div>
-    <div id="structure-analysis-section" class="feature-section active">
-        <h2>문장 구조 분석</h2>
-        <textarea id="inputSentence" rows="4" placeholder="분석할 영어 문장을 입력하세요..."></textarea><br>
-        <button id="analyze-btn">분석하기</button>
-        <div id="outputArea" class="output">분석 결과가 여기에 표시됩니다.</div>
-    </div>
-    <div id="question-generation-section" class="feature-section">
-        <h2>문제 생성</h2>
-        <textarea id="inputTextForQuestions" rows="10" placeholder="문제 생성을 위한 영어 지문을 입력하세요..."></textarea><br>
-        <div id="quantity-selector" style="margin-bottom: 10px;">
-             <span>문제 개수 선택: </span>
-             <button data-quantity="1" class="selected">1개</button>
-             <button data-quantity="3">3개</button>
-             <button data-quantity="5">5개</button>
-        </div>
-        <button id="generate-questions-btn">문제 생성하기</button>
-        <div id="questionsOutputArea" class="output">생성된 문제가 여기에 표시됩니다.</div>
-    </div>
+<script>
+    // ★★★ DOMContentLoaded 이벤트 리스너 추가 ★★★
+    document.addEventListener('DOMContentLoaded', (event) => {
+        // --- 이 안에 기존 스크립트 내용 대부분을 넣습니다 ---
 
-    <script>
         // --- 공통 변수 및 함수 ---
-        // ... (이전에 제공된 공통 변수 및 함수 정의 붙여넣기) ...
         const structureSection = document.getElementById('structure-analysis-section');
         const questionSection = document.getElementById('question-generation-section');
-        // ... (나머지 변수들) ...
-         let activeLines = [];
+        const showStructureBtn = document.getElementById('show-structure-btn');
+        const showQuestionBtn = document.getElementById('show-question-btn');
+        const outputArea = document.getElementById('outputArea');
+        const questionsOutputArea = document.getElementById('questionsOutputArea');
+        const quantitySelector = document.getElementById('quantity-selector'); // 이제 DOM 로드 후 실행됨
+        let activeLines = [];
 
+        // --- setActiveSection, removeLines 등 함수 정의 ---
+        function setActiveSection(activeBtn, activeSection) { try { [showStructureBtn, showQuestionBtn].forEach(btn => btn.classList.remove('active')); [structureSection, questionSection].forEach(section => section.classList.remove('active')); } catch(e) { console.error("active 클래스 제거 중 오류:", e); } try { activeBtn.classList.add('active'); activeSection.classList.add('active'); } catch(e) { console.error("active 클래스 추가 중 오류:", e); } try { removeLines(); } catch (error) { console.error("removeLines 함수 실행 중 오류 발생:", error); } }
+        function removeLines() { activeLines.forEach((line, index) => { try { line.remove(); } catch (e) { console.warn(`${index + 1}번째 라인 제거 중 오류:`, e); } }); activeLines = []; document.querySelectorAll('.leader-line').forEach(el => el.remove()); document.querySelectorAll('body > div[style*="position: absolute"]').forEach(el => { if (el.style.width === '0px' && el.style.height === '0px') { try { el.remove(); } catch (e) {} } }); }
 
-        // --- 구조 분석 관련 변수 및 함수 ---
-        // ... (colorMap, adjectiveModifierRoles 등 변수 정의) ...
-         const colorMap = { /* ... */ };
-         const adjectiveModifierRoles = ["형용사", "형용사구", "형용사절"];
+        // --- 구조 분석 관련 변수 및 함수 정의 ---
+        const colorMap = { S: '#1abc9c', V: '#3498db', O: '#e74c3c', C: '#f1c40f', M: '#9b59b6', SC: '#34495e', OC: '#e67e22', MOD: '#95a5a6', CONJ: '#d35400', PREP: '#2980b9', INTERJ: '#8e44ad', UNKNOWN: '#7f8c8d', '주어': '#1abc9c', '동사': '#3498db', '목적어': '#e74c3c', '보어': '#f1c40f', '수식어': '#9b59b6', '주격보어': '#34495e', '목적격보어': '#e67e22', '형용사': '#16a085', '부사': '#27ae60', '전치사구': '#2980b9', '접속사': '#d35400', '감탄사': '#8e44ad', '명사': '#c0392b', '대명사': '#d35400', '동명사': '#27ae60', 'to부정사': '#16a085', '분사': '#f39c12', '관사': '#bdc3c7', '형용사구': '#16a085', '형용사절': '#16a085', '부사구': '#27ae60', '부사절': '#27ae60', '명사구': '#c0392b', '명사절': '#c0392b'};
+        const adjectiveModifierRoles = ["형용사", "형용사구", "형용사절"];
+        function renderAnalysisBlock(sentenceData, idx) { const { sentence, analysis, grammarNotes, synonymsAntonyms } = sentenceData; const blockId = `sentence-${idx}`; let html = `<div class="sentence-block" id="${blockId}"><div class="output">`; analysis.forEach(item => { const color = colorMap[item.role] || 'black'; html += `<span class="phrase-block" id="${blockId}-${item.id}" title="${item.role}"><span class="phrase" style="color: ${color};">${item.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span><span class="label" style="color: ${color};">${item.role}</span><span class="trans">${(item.trans || '').replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span></span>`; }); html += `</div><div class="analysis-container">`; html += `<div class="analysis-box"><h2>[어법 포인트]</h2>${(grammarNotes && grammarNotes.length > 0) ? grammarNotes.map(n => `<p>${n.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`).join('') : '<p>제공된 어법 포인트가 없습니다.</p>'}</div>`; html += `<div class="analysis-box"><h2>[유의어 / 반의어]</h2>${(synonymsAntonyms && synonymsAntonyms.length > 0) ? synonymsAntonyms.map(s => `<p>${s.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`).join('') : '<p>제공된 유의어/반의어가 없습니다.</p>'}</div>`; html += `</div></div>`; return html; }
+        function drawModifyingArrows(sentenceData, blockId) { const roleMap = {}; sentenceData.analysis.forEach(e => roleMap[e.id] = e.role); sentenceData.analysis.forEach(e => { if (e.modifies && adjectiveModifierRoles.includes(e.role)) { const fromEl = document.getElementById(`${blockId}-${e.id}`); const toEl = document.getElementById(`${blockId}-${e.modifies}`); const targetRole = roleMap[e.modifies]; if (fromEl && toEl && (targetRole === "명사" || targetRole === "주어" || targetRole === "목적어" || targetRole === "대명사")) { try { const line = new LeaderLine( LeaderLine.areaAnchor(fromEl, {color: 'rgba(211, 84, 0, 0.7)', radius: 8, shape: 'circle'}), LeaderLine.areaAnchor(toEl, {color: 'rgba(41, 128, 185, 0.7)', radius: 8, shape: 'circle'}), { color: 'rgba(52, 73, 94, 0.6)', size: 2, path: 'fluid', startSocket: 'auto', endSocket: 'auto', endPlug: 'arrow1', endPlugSize: 1.3, gradient: true }); activeLines.push(line); } catch(error) { console.error("Error drawing line for:", e, error); } } } }); }
 
-
-        // 구조 분석 실행 함수 (Netlify 경로 확인!)
+        // --- API 호출 함수 정의 ---
         async function analyzeSentence() {
             const sentence = document.getElementById("inputSentence").value.trim();
             if (!sentence) { alert("분석할 문장을 입력하세요."); return; }
             outputArea.innerHTML = "분석 중..."; removeLines();
             try {
-                // ★★★ Netlify 경로 확인 ★★★
-                const response = await fetch("/.netlify/functions/api/analyze", {
+                const response = await fetch("/.netlify/functions/api/analyze", { // Netlify 경로 확인
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ sentence })
                 });
-                // ... (응답 처리 및 오류 처리 로직, 이전에 제공된 상세 버전 사용) ...
-                 if (!response.ok) {
-                    let errorMsg = `HTTP 오류 ${response.status}: ${response.statusText}`;
-                    try { const errData = await response.json(); errorMsg += `\n서버 메시지: ${errData.error || JSON.stringify(errData)}`; } catch (e) {}
-                    console.error('구조 분석 요청 실패:', errorMsg);
-                    throw new Error(errorMsg);
-                }
+                if (!response.ok) { /* ... 오류 처리 ... */ let errorMsg = `HTTP 오류 ${response.status}: ${response.statusText}`; try { const errData = await response.json(); errorMsg += `\n서버 메시지: ${errData.error || JSON.stringify(errData)}`; } catch (e) {} console.error('구조 분석 요청 실패:', errorMsg); throw new Error(errorMsg); }
                 const data = await response.json();
-                 if (!Array.isArray(data)) {
-                     console.error("받은 데이터가 배열 형태가 아님:", data);
-                     throw new Error("서버로부터 유효하지 않은 형식의 응답을 받았습니다.");
-                 }
+                if (!Array.isArray(data)) { throw new Error("..."); }
                 outputArea.innerHTML = data.map((sentenceData, idx) => renderAnalysisBlock(sentenceData, idx)).join('');
-                setTimeout(() => { /* ... 화살표 그리기 ... */ }, 100);
+                setTimeout(() => { data.forEach((sentenceData, idx) => { /* ... 화살표 ... */ }); }, 100);
             } catch (error) {
                 console.error('구조 분석 중 오류 발생:', error);
                 outputArea.innerHTML = `<p style="color: red;">오류 발생: ${error.message}</p>`;
             }
         }
 
-        // --- 문제 생성 관련 함수 ---
-        // ... (quantitySelector 이벤트 리스너) ...
-         quantitySelector.addEventListener('click', (event) => { /* ... */ });
-
-        // 문제 생성 실행 함수 (Netlify 경로 확인!)
         async function generateQuestions() {
-            // ... (text, quantity 가져오는 로직) ...
-             const text = document.getElementById('inputTextForQuestions').value.trim();
-             const selectedButton = quantitySelector.querySelector('button.selected');
-             const quantity = selectedButton ? parseInt(selectedButton.getAttribute('data-quantity'), 10) : 1;
-             if (!text) { alert("지문을 입력하세요."); return; }
+            const text = document.getElementById('inputTextForQuestions').value.trim();
+            const selectedButton = quantitySelector ? quantitySelector.querySelector('button.selected') : null; // quantitySelector null 체크 추가
+            const quantity = selectedButton ? parseInt(selectedButton.getAttribute('data-quantity'), 10) : 1;
+            if (!text) { alert("지문을 입력하세요."); return; }
             questionsOutputArea.innerHTML = `<p>문제 ${quantity}개를 생성 중입니다...</p>`;
             try {
-                // ★★★ Netlify 경로 확인 ★★★
-                const response = await fetch("/.netlify/functions/api/generate-questions", {
+                const response = await fetch("/.netlify/functions/api/generate-questions", { // Netlify 경로 확인
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ text: text, quantity: quantity })
                 });
-                // ... (응답 처리 및 오류 처리 로직, 이전에 제공된 상세 버전 사용) ...
-                 if (!response.ok) {
-                    let errorMsg = `HTTP 오류 ${response.status}: ${response.statusText}`;
-                    try { const errData = await response.json(); errorMsg += `\n서버 메시지: ${errData.error || JSON.stringify(errData)}`; } catch (e) {}
-                    console.error('문제 생성 요청 실패:', errorMsg);
-                    throw new Error(errorMsg);
-                }
+                 if (!response.ok) { /* ... 오류 처리 ... */ let errorMsg = `HTTP 오류 ${response.status}: ${response.statusText}`; try { const errData = await response.json(); errorMsg += `\n서버 메시지: ${errData.error || JSON.stringify(errData)}`; } catch (e) {} console.error('문제 생성 요청 실패:', errorMsg); throw new Error(errorMsg); }
                 const dataArray = await response.json();
                  if (!Array.isArray(dataArray)) { throw new Error("..."); }
                  if (dataArray.length === 0) { /* ... */ return; }
@@ -119,23 +68,39 @@
             }
         }
 
-        // --- 함수 구현부 (setActiveSection, removeLines 등) ---
-        // ... (이전에 제공된 함수 구현부 전체 붙여넣기) ...
-        function setActiveSection(activeBtn, activeSection) { /* ... */ }
-        function removeLines() { /* ... */ }
-        function renderAnalysisBlock(sentenceData, idx) { /* ... */ }
-        function drawModifyingArrows(sentenceData, blockId) { /* ... */ }
-        function toggleAnswer(button) { /* ... */ }
+        // --- 정답 토글 함수 정의 ---
+        function toggleAnswer(button) { const answerSection = button.parentElement; const answerP = answerSection.querySelector('p.answer'); if (answerP) { if (answerP.style.display === 'none' || answerP.style.display === '') { answerP.style.display = 'block'; button.textContent = '정답 숨기기'; } else { answerP.style.display = 'none'; button.textContent = '정답 보기'; } } else { console.error("정답 요소를 찾을 수 없습니다."); } }
 
         // --- 이벤트 리스너 연결 및 초기화 ---
-        // ... (이전에 제공된 이벤트 리스너 연결 코드 붙여넣기) ...
-         showStructureBtn.addEventListener('click', () => setActiveSection(showStructureBtn, structureSection));
-        showQuestionBtn.addEventListener('click', () => setActiveSection(showQuestionBtn, questionSection));
-        document.getElementById("analyze-btn").addEventListener("click", analyzeSentence);
-        document.getElementById('generate-questions-btn').addEventListener("click", generateQuestions);
-        setActiveSection(showStructureBtn, structureSection);
+        // quantitySelector가 null이 아닐 때만 리스너 추가 (추가 방어 코드)
+        if (quantitySelector) {
+            quantitySelector.addEventListener('click', (event) => {
+                if (event.target.tagName === 'BUTTON') {
+                    quantitySelector.querySelectorAll('button').forEach(btn => btn.classList.remove('selected'));
+                    event.target.classList.add('selected');
+                }
+            });
+        } else {
+            // quantity-selector 요소가 없을 경우 콘솔에 경고 출력 (오류는 아님)
+            console.warn("quantitySelector 요소를 찾을 수 없습니다. 문제 생성 섹션의 수량 선택기가 없거나 ID가 다를 수 있습니다.");
+        }
 
-    </script>
+        // 다른 요소들은 ID가 확실히 존재한다고 가정하고 리스너 연결
+        if (showStructureBtn) showStructureBtn.addEventListener('click', () => setActiveSection(showStructureBtn, structureSection));
+        if (showQuestionBtn) showQuestionBtn.addEventListener('click', () => setActiveSection(showQuestionBtn, questionSection));
+        const analyzeBtn = document.getElementById("analyze-btn");
+        if (analyzeBtn) analyzeBtn.addEventListener("click", analyzeSentence);
+        const generateBtn = document.getElementById('generate-questions-btn');
+        if (generateBtn) generateBtn.addEventListener("click", generateQuestions);
+
+        // 초기 섹션 활성화 (showStructureBtn과 structureSection이 존재할 때만)
+        if (showStructureBtn && structureSection) {
+            setActiveSection(showStructureBtn, structureSection);
+        }
+
+    // ★★★ 끝: DOMContentLoaded 이벤트 리스너 ★★★
+    });
+</script>
 
 </body>
 </html>

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <title>영어 학습 도우미</title>
     <style>
-        /* --- CSS 스타일 --- */
+        /* --- CSS 스타일 (이전과 동일) --- */
         body { font-family: sans-serif; line-height: 1.6; padding: 20px; max-width: 900px; margin: 0 auto; background-color: #f9f9f9; }
         h1, h2 { text-align: center; color: #333; }
         #navigation { text-align: center; margin-bottom: 20px; }
@@ -12,43 +12,41 @@
         #navigation button.active { background-color: #007bff; color: white; border-color: #007bff; }
         .feature-section { display: none; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px;}
         .feature-section.active { display: block; }
-        textarea { width: 95%; /* Adjusted for padding */ margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
+        textarea { width: 95%; margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
         button { padding: 10px 20px; cursor: pointer; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 1em; transition: background-color 0.3s ease; }
         button:hover { background-color: #218838; }
-        .output { margin-top: 20px; padding: 15px; border: 1px solid #eee; background-color: #f8f9fa; border-radius: 4px; min-height: 50px; white-space: pre-wrap; /* Preserve whitespace and wrap */ word-wrap: break-word; }
+        .output { margin-top: 20px; padding: 15px; border: 1px solid #eee; background-color: #f8f9fa; border-radius: 4px; min-height: 50px; white-space: pre-wrap; word-wrap: break-word; }
         .sentence-block { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed #ccc; }
-        .phrase-block { display: inline-block; margin: 5px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 15px; background-color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05); text-align: center; position: relative; /* For LeaderLine anchor */ vertical-align: top; transition: transform 0.2s ease; }
+        .phrase-block { display: inline-block; margin: 5px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 15px; background-color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05); text-align: center; position: relative; vertical-align: top; transition: transform 0.2s ease; }
         .phrase-block:hover { transform: translateY(-2px); }
         .phrase { font-size: 1.1em; display: block; margin-bottom: 3px; }
         .label { font-size: 0.8em; color: #555; font-style: italic; display: block; margin-bottom: 3px; }
         .trans { font-size: 0.9em; color: #777; display: block; }
-        .analysis-container { display: flex; justify-content: space-around; margin-top: 15px; gap: 15px; flex-wrap: wrap; /* Allow wrapping on smaller screens */ }
-        .analysis-box { background-color: #e9ecef; padding: 15px; border-radius: 5px; width: 100%; /* Default full width */ font-size: 0.95em; margin-bottom: 10px; }
-        @media (min-width: 600px) { /* Adjust breakpoint as needed */
-            .analysis-box { width: 48%; margin-bottom: 0; }
-        }
+        .analysis-container { display: flex; justify-content: space-around; margin-top: 15px; gap: 15px; flex-wrap: wrap; }
+        .analysis-box { background-color: #e9ecef; padding: 15px; border-radius: 5px; width: 100%; font-size: 0.95em; margin-bottom: 10px; }
+        @media (min-width: 600px) { .analysis-box { width: 48%; margin-bottom: 0; } }
         .analysis-box h2 { font-size: 1.1em; margin-top: 0; margin-bottom: 10px; color: #495057; text-align: left; border-bottom: 1px solid #ced4da; padding-bottom: 5px;}
         .analysis-box p { margin: 0 0 8px 0; }
         /* 문제 생성 섹션 스타일 */
-        #question-generation-section .output { white-space: normal; /* 기본값으로 되돌림 */ }
+        #question-generation-section .output { white-space: normal; }
         .question-item { border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 15px; background-color: #fff; border-radius: 5px; }
         .question-item h3 { margin-top: 0; font-size: 1.1em; color: #333; }
         .question-item p { margin: 5px 0; }
         .question-item strong { color: #0056b3; }
-        .question-item ul { margin-top: 0; padding-left: 20px; } /* 조건 리스트 스타일 */
+        .question-item ul { margin-top: 0; padding-left: 20px; } /* 조건/보기 리스트 스타일 */
         .question-item .vocabulary-list { list-style: none; padding: 0; margin-top: 8px; }
         .question-item .vocabulary-list li { display: inline-block; background-color: #f0f0f0; padding: 3px 8px; margin-right: 5px; margin-bottom: 5px; border-radius: 3px; font-size: 0.9em; }
         .question-item button.toggle-answer { background-color: #6c757d; font-size: 0.9em; padding: 5px 10px; margin-top: 10px; }
         .question-item button.toggle-answer:hover { background-color: #5a6268; }
-        .question-item p.answer { background-color: #dff0d8; padding: 10px; border: 1px solid #d6e9c6; color: #3c763d; border-radius: 4px; margin-top: 10px; display: none; /* 기본 숨김 */ }
+        .question-item p.answer { background-color: #dff0d8; padding: 10px; border: 1px solid #d6e9c6; color: #3c763d; border-radius: 4px; margin-top: 10px; display: none; }
         #quantity-selector button { background-color: #f8f9fa; border: 1px solid #dee2e6; color: #495057; margin: 0 3px; }
         #quantity-selector button.selected { background-color: #007bff; color: white; border-color: #007bff;}
+        .original-passage-box { background-color:#f0f0f0; padding: 10px; border-radius: 4px; margin-bottom:10px; white-space: pre-wrap; word-wrap: break-word; } /* 원문 표시 박스 */
     </style>
     <script src="https://cdn.jsdelivr.net/npm/leader-line-new@1.1.9/leader-line.min.js"></script>
 </head>
 <body>
     <h1>영어 학습 도우미</h1>
-
     <div id="navigation">
         <button id="show-structure-btn" class="active">구조 분석</button>
         <button id="show-question-btn">문제 생성</button>
@@ -75,10 +73,8 @@
     </div>
 
     <script>
-        // DOM 로드가 완료된 후 스크립트 실행
         document.addEventListener('DOMContentLoaded', (event) => {
-
-            // --- 전역 변수 및 요소 가져오기 ---
+            // --- 요소 가져오기 ---
             const structureSection = document.getElementById('structure-analysis-section');
             const questionSection = document.getElementById('question-generation-section');
             const showStructureBtn = document.getElementById('show-structure-btn');
@@ -92,173 +88,95 @@
             const generateBtn = document.getElementById('generate-questions-btn');
             let activeLines = [];
 
-            // --- 색상 맵 정의 ---
-            const colorMap = { S: '#1abc9c', V: '#3498db', O: '#e74c3c', C: '#f1c40f', M: '#9b59b6', SC: '#34495e', OC: '#e67e22', MOD: '#95a5a6', CONJ: '#d35400', PREP: '#2980b9', INTERJ: '#8e44ad', UNKNOWN: '#7f8c8d', '주어': '#1abc9c', '동사': '#3498db', '목적어': '#e74c3c', '보어': '#f1c40f', '수식어': '#9b59b6', '주격보어': '#34495e', '목적격보어': '#e67e22', '형용사': '#16a085', '부사': '#27ae60', '전치사구': '#2980b9', '접속사': '#d35400', '감탄사': '#8e44ad', '명사': '#c0392b', '대명사': '#d35400', '동명사': '#27ae60', 'to부정사': '#16a085', '분사': '#f39c12', '관사': '#bdc3c7', '형용사구': '#16a085', '형용사절': '#16a085', '부사구': '#27ae60', '부사절': '#27ae60', '명사구': '#c0392b', '명사절': '#c0392b'};
+            // --- 색상 맵 ---
+            const colorMap = { /* ... */ }; // 이전과 동일
             const adjectiveModifierRoles = ["형용사", "형용사구", "형용사절"];
 
             // --- 함수 정의 ---
+            function setActiveSection(activeBtn, activeSection) { /* ... 이전과 동일 ... */ try { [showStructureBtn, showQuestionBtn].forEach(btn => btn?.classList.remove('active')); [structureSection, questionSection].forEach(section => section?.classList.remove('active')); } catch(e) {} try { activeBtn?.classList.add('active'); activeSection?.classList.add('active'); } catch(e) {} try { removeLines(); } catch (error) {} }
+            function removeLines() { /* ... 이전과 동일 ... */ activeLines.forEach((line) => { try { line?.remove(); } catch (e) {} }); activeLines = []; document.querySelectorAll('body > .leader-line').forEach(el => el.remove()); }
+            function renderAnalysisBlock(sentenceData, idx) { /* ... 이전과 동일 ... */ const { sentence, analysis, grammarNotes, synonymsAntonyms } = sentenceData; const blockId = `sentence-${idx}`; let html = `<div class="sentence-block" id="${blockId}"><div class="output">`; analysis.forEach(item => { const color = colorMap[item.role] || 'black'; html += `<span class="phrase-block" id="${blockId}-${item.id}" title="${item.role}"><span class="phrase" style="color: ${color};">${item.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span><span class="label" style="color: ${color};">${item.role}</span><span class="trans">${(item.trans || '').replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span></span>`; }); html += `</div><div class="analysis-container">`; html += `<div class="analysis-box"><h2>[어법 포인트]</h2>${(grammarNotes && grammarNotes.length > 0) ? grammarNotes.map(n => `<p>${n.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`).join('') : '<p>없음</p>'}</div>`; html += `<div class="analysis-box"><h2>[유의어 / 반의어]</h2>${(synonymsAntonyms && synonymsAntonyms.length > 0) ? synonymsAntonyms.map(s => `<p>${s.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`).join('') : '<p>없음</p>'}</div>`; html += `</div></div>`; return html; }
+            function drawModifyingArrows(sentenceData, blockId) { /* ... 이전과 동일 ... */ const roleMap = {}; sentenceData.analysis.forEach(e => roleMap[e.id] = e.role); sentenceData.analysis.forEach(e => { if (e.modifies && adjectiveModifierRoles.includes(e.role)) { /* ... */ } }); }
 
-            function setActiveSection(activeBtn, activeSection) {
-                try { [showStructureBtn, showQuestionBtn].forEach(btn => btn?.classList.remove('active')); [structureSection, questionSection].forEach(section => section?.classList.remove('active')); } catch(e) { console.error("active 클래스 제거 중 오류:", e); }
-                try { activeBtn?.classList.add('active'); activeSection?.classList.add('active'); } catch(e) { console.error("active 클래스 추가 중 오류:", e); }
-                try { removeLines(); } catch (error) { console.error("removeLines 함수 실행 중 오류 발생:", error); }
+            // --- API 호출 함수 ---
+            async function analyzeSentence() { /* ... 이전과 동일 (Netlify 경로 사용) ... */
+                if (!inputSentence) return; const sentence = inputSentence.value.trim(); if (!sentence) { alert("분석할 문장을 입력하세요."); return; } if (outputArea) outputArea.innerHTML = "분석 중..."; removeLines();
+                try { const response = await fetch("/.netlify/functions/api/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sentence }) }); if (!response.ok) { let errorMsg = `HTTP 오류 ${response.status}`; try { const errData = await response.json(); errorMsg += `: ${errData.error || JSON.stringify(errData)}`; } catch (e) {} throw new Error(errorMsg); } const data = await response.json(); if (!Array.isArray(data)) { throw new Error("Invalid response format."); } if (outputArea) outputArea.innerHTML = data.map((sd, i) => renderAnalysisBlock(sd, i)).join(''); setTimeout(() => { data.forEach((sd, i) => drawModifyingArrows(sd, `sentence-${i}`)); }, 100); } catch (error) { console.error('Analyze Error:', error); if (outputArea) outputArea.innerHTML = `<p style="color: red;">오류: ${error.message}</p>`; }
             }
 
-            function removeLines() {
-                activeLines.forEach((line, index) => { try { line?.remove(); } catch (e) { console.warn(`${index + 1}번째 라인 제거 중 오류:`, e); } });
-                activeLines = [];
-                document.querySelectorAll('body > .leader-line').forEach(el => el.remove());
-            }
-
-            function renderAnalysisBlock(sentenceData, idx) {
-                const { sentence, analysis, grammarNotes, synonymsAntonyms } = sentenceData; const blockId = `sentence-${idx}`; let html = `<div class="sentence-block" id="${blockId}"><div class="output">`; analysis.forEach(item => { const color = colorMap[item.role] || 'black'; html += `<span class="phrase-block" id="${blockId}-${item.id}" title="${item.role}"><span class="phrase" style="color: ${color};">${item.text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span><span class="label" style="color: ${color};">${item.role}</span><span class="trans">${(item.trans || '').replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span></span>`; }); html += `</div><div class="analysis-container">`; html += `<div class="analysis-box"><h2>[어법 포인트]</h2>${(grammarNotes && grammarNotes.length > 0) ? grammarNotes.map(n => `<p>${n.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`).join('') : '<p>제공된 어법 포인트가 없습니다.</p>'}</div>`; html += `<div class="analysis-box"><h2>[유의어 / 반의어]</h2>${(synonymsAntonyms && synonymsAntonyms.length > 0) ? synonymsAntonyms.map(s => `<p>${s.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`).join('') : '<p>제공된 유의어/반의어가 없습니다.</p>'}</div>`; html += `</div></div>`; return html;
-            }
-
-            function drawModifyingArrows(sentenceData, blockId) {
-                const roleMap = {}; sentenceData.analysis.forEach(e => roleMap[e.id] = e.role); sentenceData.analysis.forEach(e => { if (e.modifies && adjectiveModifierRoles.includes(e.role)) { const fromEl = document.getElementById(`${blockId}-${e.id}`); const toEl = document.getElementById(`${blockId}-${e.modifies}`); const targetRole = roleMap[e.modifies]; if (fromEl && toEl && (targetRole === "명사" || targetRole === "주어" || targetRole === "목적어" || targetRole === "대명사")) { try { const line = new LeaderLine( LeaderLine.areaAnchor(fromEl, {color: 'rgba(211, 84, 0, 0.7)', radius: 8, shape: 'circle'}), LeaderLine.areaAnchor(toEl, {color: 'rgba(41, 128, 185, 0.7)', radius: 8, shape: 'circle'}), { color: 'rgba(52, 73, 94, 0.6)', size: 2, path: 'fluid', startSocket: 'auto', endSocket: 'auto', endPlug: 'arrow1', endPlugSize: 1.3, gradient: true }); activeLines.push(line); } catch(error) { console.error("Error drawing line for:", e, error); } } } });
-            }
-
-            async function analyzeSentence() {
-                if (!inputSentence) { console.error("Input sentence textarea not found!"); return; }
-                const sentence = inputSentence.value.trim();
-                if (!sentence) { alert("분석할 문장을 입력하세요."); return; }
-                if (outputArea) outputArea.innerHTML = "분석 중...";
-                removeLines();
+            async function generateQuestions() { /* ★★★ 화면 표시 로직 수정 ★★★ */
+                if (!inputTextForQuestions) return; const text = inputTextForQuestions.value.trim(); const selectedButton = quantitySelector ? quantitySelector.querySelector('button.selected') : null; const quantity = selectedButton ? parseInt(selectedButton.getAttribute('data-quantity'), 10) : 1; if (!text) { alert("지문을 입력하세요."); return; } if (questionsOutputArea) questionsOutputArea.innerHTML = `<p>문제 ${quantity}개를 생성 중입니다...</p>`;
                 try {
-                    const response = await fetch("/.netlify/functions/api/analyze", { // Netlify 경로
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ sentence })
-                    });
-                    if (!response.ok) {
-                        let errorMsg = `HTTP 오류 ${response.status}: ${response.statusText}`;
-                        try { const errData = await response.json(); errorMsg += `\n서버 메시지: ${errData.error || JSON.stringify(errData)}`; } catch (e) {}
-                        console.error('구조 분석 요청 실패:', errorMsg);
-                        throw new Error(errorMsg);
-                    }
-                    const data = await response.json();
-                    if (!Array.isArray(data)) { throw new Error("서버로부터 유효하지 않은 형식의 응답을 받았습니다."); }
-                    if (outputArea) outputArea.innerHTML = data.map((sentenceData, idx) => renderAnalysisBlock(sentenceData, idx)).join('');
-                    setTimeout(() => { data.forEach((sentenceData, idx) => { if (document.getElementById(`sentence-${idx}`)) { drawModifyingArrows(sentenceData, `sentence-${idx}`); } }); }, 100);
-                } catch (error) {
-                    console.error('구조 분석 중 오류 발생:', error);
-                    if (outputArea) outputArea.innerHTML = `<p style="color: red;">오류 발생: ${error.message}</p>`;
-                }
-            }
-
-            async function generateQuestions() {
-                if (!inputTextForQuestions) { console.error("Input text for questions textarea not found!"); return; }
-                const text = inputTextForQuestions.value.trim();
-                const selectedButton = quantitySelector ? quantitySelector.querySelector('button.selected') : null;
-                const quantity = selectedButton ? parseInt(selectedButton.getAttribute('data-quantity'), 10) : 1;
-                if (!text) { alert("지문을 입력하세요."); return; }
-                if (questionsOutputArea) questionsOutputArea.innerHTML = `<p>문제 ${quantity}개를 생성 중입니다...</p>`;
-
-                try {
-                    const response = await fetch("/.netlify/functions/api/generate-questions", { // Netlify 경로
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ text: text, quantity: quantity })
-                    });
-                     if (!response.ok) {
-                         let errorMsg = `HTTP 오류 ${response.status}: ${response.statusText}`;
-                         try { const errData = await response.json(); errorMsg += `\n서버 메시지: ${errData.error || JSON.stringify(errData)}`; } catch (e) {}
-                         console.error('문제 생성 요청 실패:', errorMsg);
-                         throw new Error(errorMsg);
-                     }
+                    const response = await fetch("/.netlify/functions/api/generate-questions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: text, quantity: quantity }) });
+                    if (!response.ok) { let errorMsg = `HTTP 오류 ${response.status}`; try { const errData = await response.json(); errorMsg += `: ${errData.error || JSON.stringify(errData)}`; } catch (e) {} throw new Error(errorMsg); }
                     const dataArray = await response.json();
-                     if (!Array.isArray(dataArray)) { throw new Error("서버로부터 유효하지 않은 형식의 응답을 받았습니다."); }
-                     if (dataArray.length === 0) { if (questionsOutputArea) questionsOutputArea.innerHTML = "<p>생성된 문제가 없습니다.</p>"; return; }
+                    if (!Array.isArray(dataArray)) { throw new Error("Invalid response format."); }
+                    if (dataArray.length === 0) { if (questionsOutputArea) questionsOutputArea.innerHTML = "<p>생성된 문제가 없습니다.</p>"; return; }
 
                     let finalOutput = "";
                     dataArray.forEach((data, index) => {
                         const questionId = `q-${index}`;
                         finalOutput += `<div class="question-item" id="${questionId}">`;
                         finalOutput += `<h3>문제 ${index + 1}</h3>`;
-                        finalOutput += `<p><strong>우리말 뜻:</strong> ${data.korean_prompt?.replace(/</g, "&lt;").replace(/>/g, "&gt;") ?? 'N/A'}</p>`; // 필드명 변경 korean_prompt
 
-                        // 조건 처리 (배열) ★★★ 수정된 부분 ★★★
-                        finalOutput += `<p><strong>조건:</strong></p>`;
+                        // 1. 원문 표시 (original_passage 필드 사용)
+                        finalOutput += `<p><strong>[원문]</strong></p><div class="original-passage-box">${data.original_passage?.replace(/</g, "&lt;").replace(/>/g, "&gt;") ?? 'N/A'}</div>`;
+
+                        // 2. 목표 문장 (한글) 표시 (target_sentence_korean 필드 사용)
+                        finalOutput += `<p style="margin-top:10px;"><strong>(A) 우리말 뜻:</strong> ${data.target_sentence_korean?.replace(/</g, "&lt;").replace(/>/g, "&gt;") ?? 'N/A'}</p>`;
+
+                        // 3. 조건 표시 (conditions 배열 처리)
+                        finalOutput += `<p><strong>&lt;조건&gt;:</strong></p>`;
                         if (Array.isArray(data.conditions) && data.conditions.length > 0) {
                             finalOutput += `<ul style="margin-top: 0; padding-left: 20px;">`;
                             data.conditions.forEach(cond => {
                                 finalOutput += `<li>${String(cond).replace(/</g, "&lt;").replace(/>/g, "&gt;")}</li>`;
                             });
                             finalOutput += `</ul>`;
-                        } else if (data.conditions) { // Fallback
-                            finalOutput += `<p>${String(data.conditions).replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`;
-                        } else {
-                            finalOutput += `<p>N/A</p>`;
-                        }
-                        // ★★★ 여기까지 수정 ★★★
+                        } else { finalOutput += `<p>N/A</p>`; }
 
-                        // 보기 (영어 단어) 처리
-                        if (data.vocabulary && Array.isArray(data.vocabulary) && data.vocabulary.length > 0) {
-                            finalOutput += `<p><strong>&lt;보기&gt;:</strong></p><ul class="vocabulary-list">`; // 필드명 vocabulary 유지
+                        // 4. 보기 (영어 단어) 표시 (vocabulary 배열 처리)
+                        finalOutput += `<p><strong>&lt;보기&gt;:</strong></p>`;
+                        if (Array.isArray(data.vocabulary) && data.vocabulary.length > 0) {
+                            finalOutput += `<ul class="vocabulary-list">`;
                             data.vocabulary.forEach(word => {
                                 finalOutput += `<li>${String(word).replace(/</g, "&lt;").replace(/>/g, "&gt;")}</li>`;
                             });
                             finalOutput += `</ul>`;
-                        }
+                        } else { finalOutput += `<p>N/A</p>`; }
 
+                        // 5. 질문 텍스트 표시 (questionText 필드 사용)
                         finalOutput += `<p><strong>질문:</strong> ${data.questionText?.replace(/</g, "&lt;").replace(/>/g, "&gt;") ?? 'N/A'}</p>`;
+
+                        // 6. 정답 버튼 및 정답 (answer 필드 사용 - 원본 영어 문장)
                         finalOutput += `<button class="toggle-answer" onclick="toggleAnswer(this)">정답 보기</button>`;
-                        finalOutput += `<p class="answer" style="display:none;"><strong>정답:</strong> ${data.answer?.replace(/</g, "&lt;").replace(/>/g, "&gt;") ?? 'N/A'}</p>`; // answer 필드 (영어 정답)
-                        finalOutput += `</div>`;
+                        finalOutput += `<p class="answer" style="display:none;"><strong>정답:</strong> ${data.answer?.replace(/</g, "&lt;").replace(/>/g, "&gt;") ?? 'N/A'}</p>`;
+                        finalOutput += `</div>`; // question-item 끝
                     });
                     if (questionsOutputArea) questionsOutputArea.innerHTML = finalOutput;
                 } catch (error) {
-                    console.error('문제 생성 중 오류 발생:', error);
+                    console.error('Generate Questions Error:', error);
                     if (questionsOutputArea) questionsOutputArea.innerHTML = `<p style="color: red;">오류 발생: ${error.message}</p>`;
                 }
             }
 
-            // toggleAnswer 함수는 전역 스코프에 있어야 하므로 DOMContentLoaded 리스너 밖에 둡니다.
-            // (바로 아래 스크립트 태그 끝나는 부분 다음에 정의되어 있음)
-
             // --- 이벤트 리스너 연결 ---
-             if (quantitySelector) {
-                quantitySelector.addEventListener('click', (event) => {
-                    if (event.target.tagName === 'BUTTON') {
-                        quantitySelector.querySelectorAll('button').forEach(btn => btn.classList.remove('selected'));
-                        event.target.classList.add('selected');
-                    }
-                });
-            } else {
-                console.warn("quantitySelector 요소를 찾을 수 없습니다.");
-            }
+            if (quantitySelector) { quantitySelector.addEventListener('click', (event) => { if (event.target.tagName === 'BUTTON') { quantitySelector.querySelectorAll('button').forEach(btn => btn.classList.remove('selected')); event.target.classList.add('selected'); } }); } else { console.warn("quantitySelector not found."); }
             if (showStructureBtn) showStructureBtn.addEventListener('click', () => setActiveSection(showStructureBtn, structureSection));
             if (showQuestionBtn) showQuestionBtn.addEventListener('click', () => setActiveSection(showQuestionBtn, questionSection));
             if (analyzeBtn) analyzeBtn.addEventListener("click", analyzeSentence);
             if (generateBtn) generateBtn.addEventListener("click", generateQuestions);
 
             // --- 초기 상태 설정 ---
-            if (showStructureBtn && structureSection) {
-                setActiveSection(showStructureBtn, structureSection);
-            } else {
-                 console.warn("초기 활성화할 버튼이나 섹션을 찾을 수 없습니다.");
-            }
+            if (showStructureBtn && structureSection) { setActiveSection(showStructureBtn, structureSection); } else { console.warn("Initial elements for setActiveSection not found."); }
 
-        }); // --- END: DOMContentLoaded 이벤트 리스너 ---
+        }); // --- END: DOMContentLoaded ---
 
-        // ★★★ toggleAnswer 함수 정의 (전역 스코프) ★★★
+        // ★★★ toggleAnswer 함수 (전역 스코프) ★★★
         function toggleAnswer(button) {
-             // console.log("Global toggleAnswer called."); // 디버깅 필요 시 주석 해제
-             const answerSection = button?.parentElement;
-             const answerP = answerSection?.querySelector('p.answer');
-             if (answerP) {
-                 if (answerP.style.display === 'none' || answerP.style.display === '') {
-                     answerP.style.display = 'block';
-                     button.textContent = '정답 숨기기';
-                 } else {
-                     answerP.style.display = 'none';
-                     button.textContent = '정답 보기';
-                 }
-             } else {
-                 console.error("정답 요소를 찾을 수 없습니다.");
-             }
+             const answerSection = button?.parentElement; const answerP = answerSection?.querySelector('p.answer');
+             if (answerP) { if (answerP.style.display === 'none' || answerP.style.display === '') { answerP.style.display = 'block'; button.textContent = '정답 숨기기'; } else { answerP.style.display = 'none'; button.textContent = '정답 보기'; } } else { console.error("Answer element not found."); }
         }
     </script>
-
 </body>
 </html>

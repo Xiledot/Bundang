@@ -2,8 +2,54 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>영어 학습 도우미</title>
-    <style>/* ... 기존 CSS 생략 ... */</style>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; padding: 20px; max-width: 900px; margin: 0 auto; background-color: #f9f9f9; }
+        h1, h2 { text-align: center; color: #333; }
+        #navigation { text-align: center; margin-bottom: 20px; }
+        #navigation button { padding: 10px 15px; margin: 0 5px; cursor: pointer; border: 1px solid #ccc; background-color: #eee; border-radius: 4px; font-size: 1em; }
+        #navigation button.active { background-color: #007bff; color: white; border-color: #007bff; }
+        .feature-section { display: none; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .feature-section.active { display: block; }
+        textarea { width: 95%; margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
+        button { padding: 10px 20px; cursor: pointer; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 1em; transition: background-color 0.3s ease; }
+        button:hover { background-color: #218838; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #export-pdf-btn { background-color: #17a2b8; margin-top: 15px; margin-right: 5px; }
+        #export-pdf-btn:hover { background-color: #138496; }
+        #copy-html-btn { background-color: #ffc107; color: #212529; margin-top: 15px; }
+        #copy-html-btn:hover { background-color: #e0a800; }
+        .output { margin-top: 20px; padding: 15px; border: 1px solid #eee; background-color: #f8f9fa; border-radius: 4px; min-height: 50px; white-space: pre-wrap; word-wrap: break-word; }
+        .sentence-block { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed #ccc; }
+        .phrase-block { display: inline-block; margin: 5px; padding: 8px 12px; border: 1px solid #ddd; border-radius: 15px; background-color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05); text-align: center; position: relative; vertical-align: top; transition: transform 0.2s ease; }
+        .phrase-block:hover { transform: translateY(-2px); }
+        .phrase { font-size: 1.1em; display: block; margin-bottom: 3px; }
+        .label { font-size: 0.8em; color: #555; font-style: italic; display: block; margin-bottom: 3px; }
+        .trans { font-size: 0.9em; color: #777; display: block; }
+        .analysis-container { display: flex; justify-content: space-around; margin-top: 15px; gap: 15px; flex-wrap: wrap; }
+        .analysis-box { background-color: #e9ecef; padding: 15px; border-radius: 5px; width: 100%; font-size: 0.95em; margin-bottom: 10px; }
+        @media (min-width: 600px) { .analysis-box { width: 48%; margin-bottom: 0; } }
+        .analysis-box h2 { font-size: 1.1em; margin-top: 0; margin-bottom: 10px; color: #495057; text-align: left; border-bottom: 1px solid #ced4da; padding-bottom: 5px; }
+        .analysis-box p { margin: 0 0 8px 0; }
+        .question-item { border: 1px solid #e0e0e0; padding: 15px; margin-bottom: 15px; background-color: #fff; border-radius: 5px; }
+        .question-item h3 { margin-top: 0; font-size: 1.1em; color: #333; }
+        .question-item p { margin: 5px 0; }
+        .question-item ul { margin-top: 0; padding-left: 20px; }
+        .question-item .vocabulary-list { list-style: none; padding: 0; margin-top: 8px; }
+        .question-item .vocabulary-list li { display: inline-block; background-color: #f0f9ff; padding: 3px 8px; margin-right: 5px; margin-bottom: 5px; border-radius: 3px; font-size: 0.9em; }
+        .question-item button.toggle-answer { background-color: #6c757d; font-size: 0.9em; padding: 5px 10px; margin-top: 10px; }
+        .question-item button.toggle-answer:hover { background-color: #5a6268; }
+        .question-item p.answer { background-color: #dff0d8; padding: 10px; border: 1px solid #d6e9c6; color: #3c763d; border-radius: 4px; margin-top: 10px; display: none; }
+        .original-passage-box { background-color:#f0f9f0; padding: 10px; border-radius: 4px; margin-bottom:10px; white-space: pre-wrap; word-wrap: break-word; }
+        /* 단어 테스트 */
+        #wordtest-section textarea { width: 95%; height: 150px; }
+        #load-words-btn, #start-slideshow-btn { margin-top: 10px; }
+        #waiting-screen { text-align: center; margin-top: 20px; }
+        #slide { display: none; margin-top: 20px; width: 100%; height: 60vh; display: flex; align-items: center; justify-content: center; font-size: 4em; user-select: none; cursor: pointer; }
+        #slide.word { background: #fff; color: #000; }
+        #slide.blank { background: #000; color: #000; }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/leader-line-new@1.1.9/leader-line.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -39,7 +85,7 @@
 
     <div id="wordtest-section" class="feature-section">
         <h2>단어 테스트</h2>
-        <textarea id="wordInput" placeholder="단어:뜻 또는 단어 의미 형식으로 입력하세요"></textarea><br>
+        <textarea id="wordInput" placeholder="단어:뜻 or 단어 의미 입력하세요..."></textarea><br>
         <button id="load-words-btn">단어 로드</button>
         <div id="waiting-screen" style="display:none;">
             <p>단어가 로드되었습니다. 테스트를 시작하세요.</p>
@@ -49,84 +95,59 @@
     </div>
 
     <script>
-    // DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', () => {
-        // 섹션 요소
-        const sections = {
-            structure: document.getElementById('structure-analysis-section'),
-            question: document.getElementById('question-generation-section'),
-            wordtest: document.getElementById('wordtest-section')
-        };
-        const buttons = {
-            structure: document.getElementById('show-structure-btn'),
-            question: document.getElementById('show-question-btn'),
-            wordtest: document.getElementById('show-wordtest-btn')
-        };
-        function activate(name) {
-            // 버튼 스타일
-            Object.keys(buttons).forEach(k => buttons[k].classList.toggle('active', k === name));
-            // 섹션 표시
-            Object.keys(sections).forEach(k => sections[k].classList.toggle('active', k === name));
+        // 전역 함수들 포함
+        function escapeHtml(unsafe) {
+            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
-        // 네비게이션
-        buttons.structure.addEventListener('click', () => activate('structure'));
-        buttons.question.addEventListener('click', () => activate('question'));
-        buttons.wordtest.addEventListener('click', () => activate('wordtest'));
+        async function analyzeSentence() { /* 기존 analyzeSentence 구현 그대로 삽입 */ }
+        async function generateQuestions() { /* 기존 generateQuestions 구현 그대로 삽입 */ }
+        async function exportToPdf() { /* 기존 exportToPdf 구현 그대로 삽입 */ }
+        async function copyFormattedHtml() { /* 기존 copyFormattedHtml 구현 그대로 삽입 */ }
+        function toggleAnswer(btn) { /* 기존 toggleAnswer 구현 그대로 삽입 */ }
 
-        // 구조 분석 기능
-        const analyzeBtn = document.getElementById('analyze-btn');
-        analyzeBtn.addEventListener('click', analyzeSentence);
-
-        // 문제 생성 기능
-        const quantitySelector = document.getElementById('quantity-selector');
-        quantitySelector.addEventListener('click', e => {
-            if (e.target.tagName==='BUTTON') {
-                quantitySelector.querySelectorAll('button').forEach(b=>b.classList.remove('selected'));
-                e.target.classList.add('selected');
+        document.addEventListener('DOMContentLoaded', () => {
+            const sections = {
+                structure: document.getElementById('structure-analysis-section'),
+                question: document.getElementById('question-generation-section'),
+                wordtest: document.getElementById('wordtest-section')
+            };
+            const buttons = {
+                structure: document.getElementById('show-structure-btn'),
+                question: document.getElementById('show-question-btn'),
+                wordtest: document.getElementById('show-wordtest-btn')
+            };
+            function activate(name) {
+                Object.keys(buttons).forEach(k => buttons[k].classList.toggle('active', k===name));
+                Object.keys(sections).forEach(k => sections[k].classList.toggle('active', k===name));
             }
-        });
-        const generateBtn = document.getElementById('generate-questions-btn');
-        generateBtn.addEventListener('click', generateQuestions);
-        document.getElementById('export-pdf-btn').addEventListener('click', exportToPdf);
-        document.getElementById('copy-html-btn').addEventListener('click', copyFormattedHtml);
+            buttons.structure.addEventListener('click', ()=>activate('structure'));
+            buttons.question.addEventListener('click', ()=>activate('question'));
+            buttons.wordtest.addEventListener('click', ()=>activate('wordtest'));
 
-        // 단어 테스트 기능
-        const wordInput = document.getElementById('wordInput');
-        const loadBtn = document.getElementById('load-words-btn');
-        const startBtn = document.getElementById('start-slideshow-btn');
-        const waiting = document.getElementById('waiting-screen');
-        const slideEl = document.getElementById('slide');
-        let wordList = [], currentMeaning = '';
-        function parseInput() {
-            const lines = wordInput.value.split('\n').map(l=>l.trim()).filter(l=>l);
-            const list=[];
-            lines.forEach(line=>{
-                if(line.includes(':')){
-                    const [w,m]=line.split(':',2).map(s=>s.trim()); if(w&&m) list.push({word:w,meaning:m});
-                } else {
-                    const t=line.split(/\s+/);
-                    for(let i=0;i<t.length-1;i+=2) list.push({word:t[i],meaning:t[i+1]});
-                }
-            }); return list;
-        }
-        function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}}
-        loadBtn.addEventListener('click',()=>{
-            wordList=parseInput(); if(wordList.length<30) return alert('최소 30개의 단어를 입력하세요!'); shuffle(wordList);
-            wordInput.style.display='none'; loadBtn.style.display='none'; waiting.style.display='block';
-        });
-        async function runSlideshow(){
-            waiting.style.display='none'; slideEl.style.display='flex'; startBtn.disabled=true;
-            for(const {word,meaning} of wordList.slice(0,30)){
-                currentMeaning=meaning; slideEl.textContent=word; slideEl.className='word'; await new Promise(r=>setTimeout(r,3000));
-                slideEl.textContent=''; slideEl.className='blank'; await new Promise(r=>setTimeout(r,3000));
-            }
-            slideEl.textContent='테스트 종료!'; slideEl.className='word'; startBtn.disabled=false;
-        }
-        slideEl.addEventListener('click',()=>{if(slideEl.classList.contains('word')&&currentMeaning) slideEl.textContent=currentMeaning;});
-        startBtn.addEventListener('click',runSlideshow);
-    });
+            document.getElementById('analyze-btn').addEventListener('click', analyzeSentence);
+            const qs = document.getElementById('quantity-selector');
+            qs.addEventListener('click', e=>{if(e.target.tagName==='BUTTON'){qs.querySelectorAll('button').forEach(b=>b.classList.remove('selected'));e.target.classList.add('selected');}});
+            document.getElementById('generate-questions-btn').addEventListener('click', generateQuestions);
+            document.getElementById('export-pdf-btn').addEventListener('click', exportToPdf);
+            document.getElementById('copy-html-btn').addEventListener('click', copyFormattedHtml);
 
-    // 기존 전역 함수: analyzeSentence, generateQuestions, exportToPdf, copyFormattedHtml, toggleAnswer 등
+            // 단어 테스트 로직
+            const wordInput=document.getElementById('wordInput');
+            const loadBtn=document.getElementById('load-words-btn');
+            const startBtn=document.getElementById('start-slideshow-btn');
+            const waiting=document.getElementById('waiting-screen');
+            const slideEl=document.getElementById('slide');
+            let wordList=[], currentMeaning='';
+            function parseInput(){const lines=wordInput.value.split('\n').map(l=>l.trim()).filter(l=>l);const list=[];lines.forEach(line=>{if(line.includes(':')){const [w,m]=line.split(':',2).map(s=>s.trim());if(w&&m)list.push({word:w,meaning:m});}else{const t=line.split(/\s+/);for(let i=0;i<t.length-1;i+=2)list.push({word:t[i],meaning:t[i+1]});}});return list;}
+            function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}}
+            loadBtn.addEventListener('click',()=>{wordList=parseInput();if(wordList.length<30)return alert('최소30개의 단어를 입력하세요');shuffle(wordList);wordInput.style.display='none';loadBtn.style.display='none';waiting.style.display='block';});
+            async function runSlideshow(){waiting.style.display='none';slideEl.style.display='flex';startBtn.disabled=true;for(const{word,meaning}of wordList.slice(0,30)){currentMeaning=meaning;slideEl.textContent=word;slideEl.className='word';await new Promise(r=>setTimeout(r,3000));slideEl.textContent='';slideEl.className='blank';await new Promise(r=>setTimeout(r,3000));}slideEl.textContent='테스트 종료!';slideEl.className='word';startBtn.disabled=false;}
+            slideEl.addEventListener('click',()=>{if(slideEl.classList.contains('word')&&currentMeaning)slideEl.textContent=currentMeaning;});
+            startBtn.addEventListener('click',runSlideshow);
+
+            // 초기 상태
+            activate('structure');
+        });
     </script>
 </body>
 </html>

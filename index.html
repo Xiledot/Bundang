@@ -12,7 +12,7 @@
         #navigation button.active { background-color: #007bff; color: white; border-color: #007bff; }
         .feature-section { display: none; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .feature-section.active { display: block; }
-        textarea { width: 95%; margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
+        textarea, input, select { width: 95%; margin-bottom: 10px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
         button { padding: 10px 20px; cursor: pointer; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 1em; transition: background-color 0.3s ease; }
         button:hover { background-color: #218838; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
@@ -43,9 +43,11 @@
         .question-item p.answer { background-color: #dff0d8; padding: 10px; border: 1px solid #d6e9c6; color: #3c763d; border-radius: 4px; margin-top: 10px; display: none; }
         .original-passage-box { background-color:#f0f9f0; padding: 10px; border-radius: 4px; margin-bottom:10px; white-space: pre-wrap; word-wrap: break-word; }
         /* 단어 테스트 */
+        #wordlist-manager input, #wordlist-manager select { width: auto; display: inline-block; margin-right: 5px; }
+        #wordlist-manager button { display: inline-block; margin-right: 5px; }
         #wordtest-section textarea { width: 95%; height: 150px; }
         #load-words-btn, #start-slideshow-btn { margin-top: 10px; }
-        #waiting-screen { text-align: center; margin-top: 20px; }
+        #waiting-screen { display: none; text-align: center; margin-top: 20px; }
         #slide { display: none; margin-top: 20px; width: 100%; height: 60vh; display: flex; align-items: center; justify-content: center; font-size: 4em; user-select: none; cursor: pointer; }
         #slide.word { background: #fff; color: #000; }
         #slide.blank { background: #000; color: #000; }
@@ -85,9 +87,16 @@
 
     <div id="wordtest-section" class="feature-section">
         <h2>단어 테스트</h2>
-        <textarea id="wordInput" placeholder="단어:뜻 or 단어 의미 입력하세요..."></textarea><br>
-        <button id="load-words-btn">단어 로드</button>
-        <div id="waiting-screen" style="display:none;">
+        <div id="wordlist-manager">
+            <input id="list-title" placeholder="단어장 제목 입력 (예: 올림포스 1강)" />
+            <button id="save-list-btn">단어장 저장</button>
+            <button id="load-lists-btn">저장된 목록 불러오기</button>
+            <select id="lists-select"><option value="">-- 목록 선택 --</option></select>
+            <button id="apply-list-btn">단어장 적용</button>
+        </div>
+        <textarea id="wordInput" placeholder="단어:뜻 또는 단어 뜻 형식 입력하세요..."></textarea><br>
+        <button id="load-words-btn">단어 로드 (입력값 기준)</button>
+        <div id="waiting-screen">  
             <p>단어가 로드되었습니다. 테스트를 시작하세요.</p>
             <button id="start-slideshow-btn">테스트 시작</button>
         </div>
@@ -95,17 +104,103 @@
     </div>
 
     <script>
-        // 전역 함수들 포함
-        function escapeHtml(unsafe) {
-            return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        // HTML 이스케이프
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
-        async function analyzeSentence() { /* 기존 analyzeSentence 구현 그대로 삽입 */ }
-        async function generateQuestions() { /* 기존 generateQuestions 구현 그대로 삽입 */ }
-        async function exportToPdf() { /* 기존 exportToPdf 구현 그대로 삽입 */ }
-        async function copyFormattedHtml() { /* 기존 copyFormattedHtml 구현 그대로 삽입 */ }
-        function toggleAnswer(btn) { /* 기존 toggleAnswer 구현 그대로 삽입 */ }
-
+        // Netlify Function API 호출
+        async function saveWordList(title, words) {
+            await fetch('/.netlify/functions/save-wordlist', {
+                method: 'POST', headers: {'Content-Type':'application/json'},
+                body: JSON.stringify({ title, words })
+            });
+        }
+        async function fetchLists() {
+            const res = await fetch('/.netlify/functions/list-wordlists');
+            return await res.json();
+        }
+        async function fetchWordList(title) {
+            const res = await fetch(`/.netlify/functions/get-wordlist?title=${encodeURIComponent(title)}`);
+            return await res.json();
+        }
+        
+        // 문장 구조 분석
+        async function analyzeSentence() {
+            const sentence = document.getElementById('inputSentence').value.trim();
+            if (!sentence) return alert('분석할 문장을 입력하세요.');
+            document.getElementById('outputArea').textContent = '분석 중...';
+            try {
+                const res = await fetch('/.netlify/functions/api/analyze', {
+                    method: 'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ sentence })
+                });
+                const data = await res.json();
+                document.getElementById('outputArea').textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                document.getElementById('outputArea').textContent = '오류: ' + e.message;
+            }
+        }
+        
+        // 문제 생성
+        async function generateQuestions() {
+            const text = document.getElementById('inputTextForQuestions').value.trim();
+            const quantity = parseInt(document.querySelector('#quantity-selector button.selected').getAttribute('data-quantity'), 10);
+            if (!text) return alert('지문을 입력하세요.');
+            document.getElementById('questionsOutputArea').textContent = '생성 중...';
+            try {
+                const res = await fetch('/.netlify/functions/api/generate-questions', {
+                    method: 'POST', headers:{'Content-Type':'application/json'},
+                    body: JSON.stringify({ text, quantity })
+                });
+                const arr = await res.json();
+                const out = document.getElementById('questionsOutputArea');
+                out.innerHTML = '';
+                arr.forEach((item, i) => {
+                    const div = document.createElement('div'); div.className = 'question-item';
+                    div.innerHTML = `
+                        <h3>문제 ${i+1}</h3>
+                        <div class="original-passage-box">${escapeHtml(item.original_passage)}</div>
+                        <p><strong>(A) 우리말 뜻:</strong> ${escapeHtml(item.target_sentence_korean)}</p>
+                        <p><strong>&lt;조건&gt;:</strong></p><ul>${item.conditions.map(c=>`<li>${escapeHtml(c)}</li>`).join('')}</ul>
+                        <p><strong>&lt;보기&gt;:</strong></p><ul class="vocabulary-list">${item.vocabulary.map(w=>`<li>${escapeHtml(w)}</li>`).join('')}</ul>
+                        <p><strong>질문:</strong> ${escapeHtml(item.questionText)}</p>
+                        <button class="toggle-answer" onclick="toggleAnswer(this)">정답 보기</button>
+                        <p class="answer"><strong>정답:</strong> ${escapeHtml(item.answer)}</p>
+                    `;
+                    out.appendChild(div);
+                });
+            } catch (e) {
+                document.getElementById('questionsOutputArea').textContent = '오류: ' + e.message;
+            }
+        }
+        
+        // PDF, 클립보드, 토글 정답 (기존 로직)
+        async function exportToPdf() {/* ... */}
+        async function copyFormattedHtml() {/* ... */}
+        function toggleAnswer(btn) {
+            const p = btn.nextElementSibling;
+            if (p.style.display === 'block') { p.style.display = 'none'; btn.textContent = '정답 보기'; }
+            else { p.style.display = 'block'; btn.textContent = '정답 숨기기'; }
+        }
+        
+        // 단어 테스트
+        function parseInput() {
+            const lines = document.getElementById('wordInput').value.split('\n').map(l=>l.trim()).filter(l=>l);
+            const arr = [];
+            lines.forEach(line => {
+                if (line.includes(':')) {
+                    const [w, m] = line.split(':',2).map(s=>s.trim()); if(w&&m) arr.push({word:w,meaning:m});
+                } else {
+                    const t = line.split(/\s+/);
+                    for (let i = 0; i < t.length-1; i+=2) arr.push({word:t[i],meaning:t[i+1]});
+                }
+            });
+            return arr;
+        }
+        function shuffle(arr) { for (let i = arr.length-1; i>0; i--) { const j = Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }}
+        
         document.addEventListener('DOMContentLoaded', () => {
+            // 탭 전환
             const sections = {
                 structure: document.getElementById('structure-analysis-section'),
                 question: document.getElementById('question-generation-section'),
@@ -117,36 +212,71 @@
                 wordtest: document.getElementById('show-wordtest-btn')
             };
             function activate(name) {
-                Object.keys(buttons).forEach(k => buttons[k].classList.toggle('active', k===name));
                 Object.keys(sections).forEach(k => sections[k].classList.toggle('active', k===name));
+                Object.keys(buttons).forEach(k => buttons[k].classList.toggle('active', k===name));
             }
             buttons.structure.addEventListener('click', ()=>activate('structure'));
             buttons.question.addEventListener('click', ()=>activate('question'));
             buttons.wordtest.addEventListener('click', ()=>activate('wordtest'));
-
-            document.getElementById('analyze-btn').addEventListener('click', analyzeSentence);
-            const qs = document.getElementById('quantity-selector');
-            qs.addEventListener('click', e=>{if(e.target.tagName==='BUTTON'){qs.querySelectorAll('button').forEach(b=>b.classList.remove('selected'));e.target.classList.add('selected');}});
-            document.getElementById('generate-questions-btn').addEventListener('click', generateQuestions);
-            document.getElementById('export-pdf-btn').addEventListener('click', exportToPdf);
-            document.getElementById('copy-html-btn').addEventListener('click', copyFormattedHtml);
-
-            // 단어 테스트 로직
-            const wordInput=document.getElementById('wordInput');
-            const loadBtn=document.getElementById('load-words-btn');
-            const startBtn=document.getElementById('start-slideshow-btn');
-            const waiting=document.getElementById('waiting-screen');
-            const slideEl=document.getElementById('slide');
-            let wordList=[], currentMeaning='';
-            function parseInput(){const lines=wordInput.value.split('\n').map(l=>l.trim()).filter(l=>l);const list=[];lines.forEach(line=>{if(line.includes(':')){const [w,m]=line.split(':',2).map(s=>s.trim());if(w&&m)list.push({word:w,meaning:m});}else{const t=line.split(/\s+/);for(let i=0;i<t.length-1;i+=2)list.push({word:t[i],meaning:t[i+1]});}});return list;}
-            function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}}
-            loadBtn.addEventListener('click',()=>{wordList=parseInput();if(wordList.length<30)return alert('최소30개의 단어를 입력하세요');shuffle(wordList);wordInput.style.display='none';loadBtn.style.display='none';waiting.style.display='block';});
-            async function runSlideshow(){waiting.style.display='none';slideEl.style.display='flex';startBtn.disabled=true;for(const{word,meaning}of wordList.slice(0,30)){currentMeaning=meaning;slideEl.textContent=word;slideEl.className='word';await new Promise(r=>setTimeout(r,3000));slideEl.textContent='';slideEl.className='blank';await new Promise(r=>setTimeout(r,3000));}slideEl.textContent='테스트 종료!';slideEl.className='word';startBtn.disabled=false;}
-            slideEl.addEventListener('click',()=>{if(slideEl.classList.contains('word')&&currentMeaning)slideEl.textContent=currentMeaning;});
-            startBtn.addEventListener('click',runSlideshow);
-
-            // 초기 상태
             activate('structure');
+
+            // 단어장 저장/불러오기
+            const saveBtn = document.getElementById('save-list-btn');
+            const loadBtn = document.getElementById('load-lists-btn');
+            const applyBtn = document.getElementById('apply-list-btn');
+            const select = document.getElementById('lists-select');
+            saveBtn.addEventListener('click', async () => {
+                const title = document.getElementById('list-title').value.trim();
+                if (!title) return alert('제목을 입력하세요.');
+                const words = parseInput();
+                if (words.length === 0) return alert('단어를 입력하세요.');
+                await saveWordList(title, words);
+                alert('저장되었습니다.');
+            });
+            loadBtn.addEventListener('click', async () => {
+                const titles = await fetchLists();
+                select.innerHTML = '<option value="">-- 목록 선택 --</option>' + titles.map(t=>`<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+            });
+            applyBtn.addEventListener('click', async () => {
+                const title = select.value; if (!title) return alert('선택하세요.');
+                const words = await fetchWordList(title);
+                if (words.length === 0) return alert('단어장이 비었습니다.');
+                document.getElementById('wordlist-manager').style.display = 'none';
+                document.getElementById('wordInput').style.display = 'none';
+                document.getElementById('load-words-btn').style.display = 'none';
+                document.getElementById('waiting-screen').style.display = 'block';
+                window.wordList = words; // 전역
+            });
+
+            // 수동 로드 및 테스트 시작
+            document.getElementById('load-words-btn').addEventListener('click', () => {
+                const words = parseInput();
+                if (words.length < 30) return alert('최소 30개 필요');
+                window.wordList = words;
+                document.getElementById('waiting-screen').style.display = 'block';
+            });
+            document.getElementById('start-slideshow-btn').addEventListener('click', async () => {
+                const slideEl = document.getElementById('slide');
+                const waiting = document.getElementById('waiting-screen');
+                waiting.style.display = 'none';
+                slideEl.style.display = 'flex';
+                let currentMeaning = '';
+                shuffle(window.wordList);
+                for (const { word, meaning } of window.wordList.slice(0, 30)) {
+                    currentMeaning = meaning;
+                    slideEl.textContent = word;
+                    slideEl.className = 'word';
+                    await new Promise(r => setTimeout(r, 3000));
+                    slideEl.textContent = '';
+                    slideEl.className = 'blank';
+                    await new Promise(r => setTimeout(r, 3000));
+                }
+                slideEl.textContent = '테스트 종료!';
+                slideEl.className = 'word';
+                slideEl.addEventListener('click', () => {
+                    if (slideEl.classList.contains('word')) slideEl.textContent = currentMeaning;
+                });
+            });
         });
     </script>
 </body>
